@@ -294,14 +294,24 @@ const deleteUserByIdOrEmailOrUsername = async (identifier) => {
         if (!user) {
             throw new Error("User not found");
         }
-        await prisma.users.delete({
+        const deleteResult = await prisma.users.delete({
             where: {
                 user_id: user.user_id,
             },
         });
+        if (deleteResult) {
+            return `User with ID ${identifier} deleted successfully`;
+        }
+        else {
+            return `Failed to delete user with ID ${identifier} it has a related data`;
+        }
     }
     catch (error) {
-        if (error instanceof Error) {
+        if (error instanceof client_1.Prisma.PrismaClientKnownRequestError && (error === null || error === void 0 ? void 0 : error.code) === 'P2003') {
+            // Specific error code for foreign key constraint violation
+            return `Failed to delete user with ID ${identifier}. It has related data.`;
+        }
+        else if (error instanceof Error) {
             throw new Error(`Error deleting user: ${error.message}`);
         }
         else {

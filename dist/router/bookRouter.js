@@ -20,16 +20,8 @@ bookRouter.post("/librarian/reservedBooks", jwtTokenVerifier_1.default, libraria
 bookRouter.post("/librarian/confirmBorrow", jwtTokenVerifier_1.default, librarianBook_controller_1.confirmBorrowForTheLibrarian);
 bookRouter.post("/librarian/confirmReserve", jwtTokenVerifier_1.default, librarianBook_controller_1.confirmReserveForTheLibrarian);
 bookRouter.post("/librarian/confirmReturn", jwtTokenVerifier_1.default, librarianBook_controller_1.confirmReturnForTheLibrarian);
-// bookRouter.delete(
-//     "/deleteReservation",
-//     jwtTokenVerifier,
-//     deleteReservationHandler,
-// );
-// bookRouter.delete(
-//     "/deleteTransaction",
-//     jwtTokenVerifier,
-//     deleteTransactionHandler,
-// );
+bookRouter.delete("/deleteReservation", jwtTokenVerifier_1.default, userBook_controller_1.deleteReservationHandler);
+bookRouter.delete("/deleteTransaction", jwtTokenVerifier_1.default, userBook_controller_1.deleteTransactionHandler);
 bookRouter.delete("/librarian/deleteReservation", jwtTokenVerifier_1.default, librarianBook_controller_1.deleteReservationHandlerForLibraraian);
 bookRouter.delete("/librarian/deleteTransaction", jwtTokenVerifier_1.default, librarianBook_controller_1.deleteTransactionHandlerForLibraraian);
 bookRouter.get("/librarian/checkExpired", jwtTokenVerifier_1.default, librarianBook_controller_1.checkExpiredRequested);

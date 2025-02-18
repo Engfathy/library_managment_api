@@ -32,11 +32,12 @@ const addBookByLibrarian = async (req, res) => {
             available_copies,
             library_name: librarianUser.library_name,
         }, String(librarianUser.library_name), genreNames);
-        const books = await (0, bookService_1.findBooksByCriteriaForLibrarian)({}, String(librarianUser.library_name));
+        const books = await (0, bookService_1.findBooksByCriteriaForLibrarian)({}, String(librarianUser.library_name), 1);
         return res.status(200).json({
             success: true,
             msg: "Book added successfully",
             data: books,
+            page: 1
         });
     }
     catch (error) {
@@ -189,7 +190,7 @@ const filterBooksForLibrarian = async (req, res) => {
             const books = await (0, bookService_1.findBooksByCriteriaForLibrarian)(filters, librarianUser.library_name, page);
             if (!books || books.length === 0) {
                 return res.status(404).json({
-                    success: false,
+                    success: true,
                     msg: "No more data💔💔(❁´◡`❁)",
                     page: parseInt(page)
                 });
@@ -249,7 +250,7 @@ const getRequestedBorrowBooks = async (req, res) => {
         const data = await (0, bookService_1.getBorrowedBooksForLibrarian)(librarianUser.library_name, state, page);
         if (!data || data.length === 0) {
             return res.status(404).json({
-                success: false,
+                success: true,
                 msg: "No more data💔💔(❁´◡`❁)",
                 page: parseInt(page)
             });

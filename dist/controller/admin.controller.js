@@ -152,7 +152,7 @@ const filterUsers = async (req, res) => {
         const users = await (0, userService_1.getUsersByFilters)(filters, page);
         if (!users || users.length === 0) {
             return res.status(404).json({
-                success: false,
+                success: true,
                 msg: "No more data💔💔(❁´◡`❁)",
                 page: parseInt(page)
             });
@@ -195,7 +195,7 @@ const getAllUsersByAdmin = async (req, res) => {
         const users = await (0, userService_1.getAllUsers)(page);
         if (!users || users.length === 0) {
             return res.status(404).json({
-                success: false,
+                success: true,
                 msg: "No more data💔💔(❁´◡`❁)",
                 page: parseInt(page)
             });
@@ -221,7 +221,6 @@ const getAllUsersByAdmin = async (req, res) => {
 exports.getAllUsersByAdmin = getAllUsersByAdmin;
 const deleteUserByIdentifier = async (req, res) => {
     const { identifier } = req.body;
-    console.log(identifier);
     const adminId = req.cookies["userId"] || req.headers["id"];
     const user = await (0, userService_1.findUserById)(parseInt(adminId));
     if (!user) {
@@ -239,10 +238,10 @@ const deleteUserByIdentifier = async (req, res) => {
             .json({ success: false, msg: "Identifier is required" });
     }
     try {
-        await (0, userService_1.deleteUserByIdOrEmailOrUsername)(identifier);
+        const message = await (0, userService_1.deleteUserByIdOrEmailOrUsername)(identifier);
         return res
             .status(200)
-            .json({ success: true, msg: "User deleted successfully" });
+            .json({ success: true, msg: message });
     }
     catch (error) {
         if (error instanceof Error) {

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTransactionsForUser = exports.getReservationsForUser = exports.checkExpiredBooksForLibrarian = exports.confirmReturnForLibrarian = exports.confirmReserveForLibrarian = exports.deleteReservation = exports.deleteTransaction = exports.confirmBorrowForLibrarian = exports.getBorrowedBooksForLibrarianToConfirm = exports.getBorrowedBooksForLibrarian = exports.getReservationsForLibrarian = exports.reserveBook = exports.borrowBook = exports.findBooksByCriteria = exports.findBooksByCriteriaForLibrarian = exports.deleteBookById = exports.updateBook = exports.findBookById = exports.createBookWithGenres = void 0;
+exports.getTransactionsForUser = exports.getReservationsForUser = exports.checkExpiredBooksForLibrarian = exports.confirmReturnForLibrarian = exports.confirmReserveForLibrarian = exports.deleteReservationForUser = exports.deleteTransactionForUser = exports.deleteReservation = exports.deleteTransaction = exports.confirmBorrowForLibrarian = exports.getBorrowedBooksForLibrarianToConfirm = exports.getBorrowedBooksForLibrarian = exports.getReservationsForLibrarian = exports.reserveBook = exports.borrowBook = exports.findBooksByCriteria = exports.findBooksByCriteriaForLibrarian = exports.deleteBookById = exports.updateBook = exports.findBookById = exports.createBookWithGenres = void 0;
 const client_1 = require("@prisma/client");
 const genereService_1 = require("./genereService");
 const userService_1 = require("./userService");
@@ -16,7 +16,9 @@ async function createBookWithGenres(bookData, librarianName, genreNames) {
             genre_id: genreId,
         }));
         await prisma.books_genres.createMany({ data: bookGenresData });
-        const allBooks = await prisma.books.findMany({ where: { library_name: librarianName } });
+        const allBooks = await prisma.books.findMany({
+            where: { library_name: librarianName },
+        });
         const allGenres = await prisma.genres.findMany();
         const bookGenresMap = {};
         for (const book of allBooks) {
@@ -24,7 +26,7 @@ async function createBookWithGenres(bookData, librarianName, genreNames) {
                 where: { book_id: book.book_id },
                 include: { genres: true },
             });
-            const genresForBook = bookGenres.map(bg => bg.genres.name);
+            const genresForBook = bookGenres.map((bg) => bg.genres.name);
             bookGenresMap[book.book_id] = genresForBook;
         }
         return allBooks.map((book) => ({
@@ -92,11 +94,13 @@ async function updateBook(librarianLibraryName, bookId, updatedBookData, genreNa
         }));
         await prisma.books_genres.createMany({ data: bookGenresData });
         // Fetch all books associated with the specified library name
-        const allBooks = await prisma.books.findMany({ where: { library_name: librarianLibraryName } });
+        const allBooks = await prisma.books.findMany({
+            where: { library_name: librarianLibraryName },
+        });
         // Fetch all genres
         const allGenres = await prisma.genres.findMany();
         // Fetch genres for each book in parallel
-        const bookGenresPromises = allBooks.map(book => prisma.books_genres.findMany({
+        const bookGenresPromises = allBooks.map((book) => prisma.books_genres.findMany({
             where: { book_id: book.book_id },
             include: { genres: true },
         }));
@@ -105,7 +109,7 @@ async function updateBook(librarianLibraryName, bookId, updatedBookData, genreNa
         // Map book IDs to their genres
         const bookGenresMap = {};
         bookGenresResults.forEach((bookGenres, index) => {
-            const genresForBook = bookGenres.map(bg => bg.genres.name);
+            const genresForBook = bookGenres.map((bg) => bg.genres.name);
             bookGenresMap[allBooks[index].book_id] = genresForBook;
         });
         // Return all books with their genres
@@ -146,7 +150,7 @@ async function deleteBookById(librarianLibraryName, bookId) {
         // Fetch all genres
         const allGenres = await prisma.genres.findMany();
         // // Fetch genres for each book in parallel
-        // const bookGenresPromises = allBooks.map(book => 
+        // const bookGenresPromises = allBooks.map(book =>
         //     prisma.books_genres.findMany({
         //         where: { book_id: book.book_id },
         //         include: { genres: true },
@@ -256,7 +260,7 @@ async function findBooksByCriteriaForLibrarian(criteria, libraryName, options) {
                 include: { genres: true },
             });
             // Extract genre names for the current book
-            const genresForBook = bookGenres.map(bg => bg.genres.name);
+            const genresForBook = bookGenres.map((bg) => bg.genres.name);
             // Map book ID to its associated genre names
             bookGenresMap[book.book_id] = genresForBook;
         }
@@ -348,7 +352,7 @@ async function findBooksByCriteria(criteria) {
                 include: { genres: true },
             });
             // Extract genre names for the current book
-            const genresForBook = bookGenres.map(bg => bg.genres.name);
+            const genresForBook = bookGenres.map((bg) => bg.genres.name);
             // Map book ID to its associated genre names
             bookGenresMap[book.book_id] = genresForBook;
         }
@@ -599,7 +603,6 @@ async function getBorrowedBooksForLibrarian(librarianName, state, options) {
                 },
             },
         });
-        ;
         return borrowedBooks;
     }
     catch (error) {
@@ -640,7 +643,6 @@ async function getBorrowedBooksForLibrarianToConfirm(librarianName, state) {
                 },
             },
         });
-        ;
         return borrowedBooks;
     }
     catch (error) {
@@ -856,6 +858,80 @@ async function deleteReservation(reservationId, userId) {
     }
 }
 exports.deleteReservation = deleteReservation;
+async function deleteTransactionForUser(transactionId, userId) {
+    try {
+        console.log(transactionId, userId);
+        const user = await (0, userService_1.findUserById)(userId);
+        const transaction = await prisma.transactions.findUnique({
+            where: {
+                transaction_id: transactionId,
+                user_id: user === null || user === void 0 ? void 0 : user.user_id,
+                transaction_type: "Borrow_request",
+            },
+        });
+        console.log(transaction);
+        if (!transaction) {
+            throw new Error("there is no transaction belong to you with this id");
+        }
+        await prisma.transactions.delete({
+            where: {
+                transaction_id: transactionId,
+            },
+        });
+        return "Transaction deleted successfully";
+    }
+    catch (error) {
+        console.error("Error deleting transaction:", error);
+        throw new Error("Failed to delete transaction");
+    }
+}
+exports.deleteTransactionForUser = deleteTransactionForUser;
+async function deleteReservationForUser(reservationId, userId) {
+    try {
+        const user = await (0, userService_1.findUserById)(userId);
+        const reservations = await prisma.reservations.findMany({
+            where: {
+                reservation_id: reservationId,
+                user_id: user === null || user === void 0 ? void 0 : user.user_id,
+                status: "Pending" || "Confirmed",
+            },
+        });
+        if (!reservations) {
+            throw new Error("there is no reservation belong to you with this id");
+        }
+        // Assuming reservation is an array of objects
+        for (const reservation of reservations) {
+            if (reservation.status === "Confirmed") {
+                const book_id = reservation.book_id;
+                if (!book_id) {
+                    throw new Error("Book ID is not available in the transaction");
+                }
+                const book = await prisma.books.findUnique({
+                    where: { book_id: book_id },
+                });
+                if (book) {
+                    await prisma.books.update({
+                        where: { book_id: book_id },
+                        data: {
+                            available_copies: book.available_copies + 1,
+                        },
+                    });
+                }
+            }
+        }
+        await prisma.reservations.delete({
+            where: {
+                reservation_id: reservationId,
+            },
+        });
+        return "Reservation deleted successfully";
+    }
+    catch (error) {
+        console.error("Error deleting reservation:", error);
+        throw new Error("Failed to delete reservation");
+    }
+}
+exports.deleteReservationForUser = deleteReservationForUser;
 async function confirmReserveForLibrarian(librarianName, reservationId) {
     try {
         // Check if the reservation exists and is pending
@@ -1021,14 +1097,14 @@ async function checkExpiredBooksForLibrarian(librarianName) {
                         username: true,
                         user_libraries: {
                             where: {
-                                library_name: librarianName
+                                library_name: librarianName,
                             },
                             select: {
-                                is_active: true
-                            }
-                        }
-                    }
-                }
+                                is_active: true,
+                            },
+                        },
+                    },
+                },
             },
         });
         // Get all reservations with status "Confirmed" for the librarian's library
@@ -1047,14 +1123,14 @@ async function checkExpiredBooksForLibrarian(librarianName) {
                         username: true,
                         user_libraries: {
                             where: {
-                                library_name: librarianName
+                                library_name: librarianName,
                             },
                             select: {
-                                is_active: true
-                            }
-                        }
-                    }
-                }
+                                is_active: true,
+                            },
+                        },
+                    },
+                },
             },
         });
         // Combine transactions and reservations into a single array
