@@ -137,7 +137,7 @@ export const getAllUsersByLibrarian = async (
         const users = await getAllUsersForLibrarian(String(user.library_name),page);
         if (!users || users.length === 0) {
             return res.status(404).json({
-                success: false,
+                success: true,
                 msg: "No more data💔💔(❁´◡`❁)",
                 page:parseInt(page as string)
             });

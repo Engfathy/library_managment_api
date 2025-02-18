@@ -11,7 +11,7 @@ import * as crypto from "crypto";
 
 import { findUserById } from "../prisma/services/userService";
 import { BookFilters, BookType } from "../interface/models.interface";
-import { borrowBook, deleteReservation, deleteTransaction, findBooksByCriteria, getReservationsForUser, getTransactionsForUser, reserveBook } from "../prisma/services/bookService";
+import { borrowBook, deleteReservation, deleteReservationForUser, deleteTransaction, deleteTransactionForUser, findBooksByCriteria, getReservationsForUser, getTransactionsForUser, reserveBook } from "../prisma/services/bookService";
 
 
 export const filterBooksForUser = async (
@@ -150,54 +150,54 @@ export const reserveBookForUser = async (req: express.Request, res: express.Resp
     }
 };
 
-// export const deleteTransactionHandler = async (
-//     req: express.Request,
-//     res: express.Response,
-// ) => {
-//     try {
-//         const { transactionId } = req.query;
-//         const userId = req.cookies["userId"] || req.headers["id"];
+export const deleteTransactionHandler = async (
+    req: express.Request,
+    res: express.Response,
+) => {
+    try {
+        const { transactionId } = req.query;
+        const userId = req.cookies["userId"] || req.headers["id"];
 
-//         // Find the librarian user
-//         const user = await findUserById(parseInt(userId));
-//         if (!user) {
-//             return res
-//                 .status(401)
-//                 .json({ success: false, msg: "Who are you? 🤔" });
-//         }
-//         // Delete the transaction
-//         const message = await deleteTransaction(parseInt(transactionId as string),parseInt(userId));
+        // Find the librarian user
+        const user = await findUserById(parseInt(userId));
+        if (!user) {
+            return res
+                .status(401)
+                .json({ success: false, msg: "Who are you? 🤔" });
+        }
+        // Delete the transaction
+        const message = await deleteTransactionForUser(parseInt(transactionId as string),parseInt(userId));
 
-//         res.status(200).json({ success: true, msg: message });
-//     } catch (error) {
-//         console.error('Error deleting transaction:', error);
-//         res.status(500).json({ success: false, msg: 'Failed to delete transaction' });
-//     }
-// };
-// export const deleteReservationHandler = async (
-//     req: express.Request,
-//     res: express.Response,
-// ) => {
-//     try {
-//         const { reservationId } = req.query;
-//         const userId = req.cookies["userId"] || req.headers["id"];
+        res.status(200).json({ success: true, msg: message });
+    } catch (error) {
+        console.error('Error deleting transaction:', error);
+        res.status(500).json({ success: false, msg: 'Failed to delete transaction' });
+    }
+};
+export const deleteReservationHandler = async (
+    req: express.Request,
+    res: express.Response,
+) => {
+    try {
+        const { reservationId } = req.query;
+        const userId = req.cookies["userId"] || req.headers["id"];
 
-//         // Find the librarian user
-//         const user = await findUserById(parseInt(userId));
-//         if (!user) {
-//             return res
-//                 .status(401)
-//                 .json({ success: false, msg: "Who are you? 🤔" });
-//         }
-//         // Delete the transaction
-//         const message = await deleteReservation(parseInt(reservationId as string),parseInt(userId));
+        // Find the librarian user
+        const user = await findUserById(parseInt(userId));
+        if (!user) {
+            return res
+                .status(401)
+                .json({ success: false, msg: "Who are you? 🤔" });
+        }
+        // Delete the transaction
+        const message = await deleteReservationForUser(parseInt(reservationId as string),parseInt(userId));
 
-//         res.status(200).json({ success: true, msg: message });
-//     } catch (error) {
-//         console.error('Error deleting transaction:', error);
-//         res.status(500).json({ success: false, msg: 'Failed to delete transaction' });
-//     }
-// };
+        res.status(200).json({ success: true, msg: message });
+    } catch (error) {
+        console.error('Error deleting transaction:', error);
+        res.status(500).json({ success: false, msg: 'Failed to delete transaction' });
+    }
+};
 
 export const getRequestedReservedBooksForUser = async (
     req: express.Request,

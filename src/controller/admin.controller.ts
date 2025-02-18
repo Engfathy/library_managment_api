@@ -158,7 +158,7 @@ export const filterUsers = async (
         const users = await getUsersByFilters(filters,page);
         if (!users || users.length === 0) {
             return res.status(404).json({
-                success: false,
+                success: true,
                 msg: "No more data💔💔(❁´◡`❁)",
                 page:parseInt(page as string)
             });
@@ -202,7 +202,7 @@ export const getAllUsersByAdmin = async (
         const users = await getAllUsers(page);
         if (!users || users.length === 0) {
             return res.status(404).json({
-                success: false,
+                success: true,
                 msg: "No more data💔💔(❁´◡`❁)",
                 page:parseInt(page as string)
             });
@@ -228,7 +228,6 @@ export const deleteUserByIdentifier = async (
     res: express.Response,
 ) => {
     const {identifier}  = req.body;
-    console.log(identifier);
     const adminId = req.cookies["userId"] || req.headers["id"];
     const user = await findUserById(parseInt(adminId));
     if (!user) {
@@ -247,10 +246,10 @@ export const deleteUserByIdentifier = async (
     }
 
     try {
-        await deleteUserByIdOrEmailOrUsername(identifier);
+        const message = await deleteUserByIdOrEmailOrUsername(identifier);
         return res
             .status(200)
-            .json({ success: true, msg: "User deleted successfully" });
+            .json({ success: true, msg:message });
     } catch (error) {
         if (error instanceof Error) {
             return res.status(500).json({ success: false, msg: error.message });
@@ -288,6 +287,7 @@ export const editUserByAdmin = async (
                 msg: "User not found or error updating user data.",
             });
         }
+        
 
         return res.status(200).json({
             success: true,

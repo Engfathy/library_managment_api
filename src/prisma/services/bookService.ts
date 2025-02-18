@@ -16,66 +16,61 @@ export async function createBookWithGenres(
     bookData: Book,
     librarianName: string,
     genreNames: string[],
-  ) {
+) {
     try {
-      
-      const newBook = await prisma.books.create({ data: bookData });
-  
-      
-      const genreIds = await getGenreIds(genreNames);
-  
-      
-      const bookGenresData = genreIds.map((genreId: any) => ({
-        book_id: newBook.book_id,
-        genre_id: genreId,
-      }));
-  
-      
-      await prisma.books_genres.createMany({ data: bookGenresData });
-  
-      
-      const allBooks = await prisma.books.findMany({ where: { library_name: librarianName } });
-  
-      
-      const allGenres = await prisma.genres.findMany();
-  
-      
-      const bookGenresMap: Record<number, string[]> = {};
-  
-      for (const book of allBooks) {
-        
-        const bookGenres = await prisma.books_genres.findMany({
-          where: { book_id: book.book_id },
-          include: { genres: true },
+        const newBook = await prisma.books.create({ data: bookData });
+
+        const genreIds = await getGenreIds(genreNames);
+
+        const bookGenresData = genreIds.map((genreId: any) => ({
+            book_id: newBook.book_id,
+            genre_id: genreId,
+        }));
+
+        await prisma.books_genres.createMany({ data: bookGenresData });
+
+        const allBooks = await prisma.books.findMany({
+            where: { library_name: librarianName },
         });
-  
-      
-        const genresForBook = bookGenres.map(bg => bg.genres.name);
-  
-        
-        bookGenresMap[book.book_id] = genresForBook;
-      }
-  
-      
-      return allBooks.map((book) => ({
-        book_id: book.book_id,
-        title: book.title,
-        author: book.author,
-        isbn: book.isbn,
-        type: book.type,
-        total_copies: book.total_copies,
-        available_copies: book.available_copies,
-        library_name: book.library_name,
-        genres: bookGenresMap[book.book_id] || [],
-      }));
+
+        const allGenres = await prisma.genres.findMany();
+
+        const bookGenresMap: Record<number, string[]> = {};
+
+        for (const book of allBooks) {
+            const bookGenres = await prisma.books_genres.findMany({
+                where: { book_id: book.book_id },
+                include: { genres: true },
+            });
+
+            const genresForBook = bookGenres.map((bg) => bg.genres.name);
+
+            bookGenresMap[book.book_id] = genresForBook;
+        }
+
+        return allBooks.map((book) => ({
+            book_id: book.book_id,
+            title: book.title,
+            author: book.author,
+            isbn: book.isbn,
+            type: book.type,
+            total_copies: book.total_copies,
+            available_copies: book.available_copies,
+            library_name: book.library_name,
+            genres: bookGenresMap[book.book_id] || [],
+        }));
     } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Error creating book with genres and returning all books: ${error.message}`);
-      } else {
-        throw new Error(`Error creating book with genres and returning all books: Unknown error occurred`);
-      }
+        if (error instanceof Error) {
+            throw new Error(
+                `Error creating book with genres and returning all books: ${error.message}`,
+            );
+        } else {
+            throw new Error(
+                `Error creating book with genres and returning all books: Unknown error occurred`,
+            );
+        }
     }
-  }
+}
 // Function to find a book by its ID
 export async function findBookById(bookId: number) {
     try {
@@ -125,17 +120,19 @@ export async function updateBook(
         await prisma.books_genres.createMany({ data: bookGenresData });
 
         // Fetch all books associated with the specified library name
-        const allBooks = await prisma.books.findMany({ where: { library_name: librarianLibraryName } });
+        const allBooks = await prisma.books.findMany({
+            where: { library_name: librarianLibraryName },
+        });
 
         // Fetch all genres
         const allGenres = await prisma.genres.findMany();
 
         // Fetch genres for each book in parallel
-        const bookGenresPromises = allBooks.map(book => 
+        const bookGenresPromises = allBooks.map((book) =>
             prisma.books_genres.findMany({
                 where: { book_id: book.book_id },
                 include: { genres: true },
-            })
+            }),
         );
 
         // Wait for all genre fetching promises to resolve
@@ -144,7 +141,7 @@ export async function updateBook(
         // Map book IDs to their genres
         const bookGenresMap: Record<number, string[]> = {};
         bookGenresResults.forEach((bookGenres, index) => {
-            const genresForBook = bookGenres.map(bg => bg.genres.name);
+            const genresForBook = bookGenres.map((bg) => bg.genres.name);
             bookGenresMap[allBooks[index].book_id] = genresForBook;
         });
 
@@ -191,7 +188,7 @@ export async function deleteBookById(
         const allGenres = await prisma.genres.findMany();
 
         // // Fetch genres for each book in parallel
-        // const bookGenresPromises = allBooks.map(book => 
+        // const bookGenresPromises = allBooks.map(book =>
         //     prisma.books_genres.findMany({
         //         where: { book_id: book.book_id },
         //         include: { genres: true },
@@ -220,7 +217,7 @@ export async function deleteBookById(
         //     library_name: book.library_name,
         //     genres: bookGenresMap[book.book_id] || [],
         // }));
-        return deletedBook
+        return deletedBook;
     } catch (error) {
         if (error instanceof Error) {
             throw new Error(`Error deleting book by id: ${error.message}`);
@@ -232,16 +229,14 @@ export async function deleteBookById(
     }
 }
 
-
-
 export async function findBooksByCriteriaForLibrarian(
     criteria: BookFilters,
     libraryName: string,
-    options?: any
+    options?: any,
 ) {
     try {
         let page = options || 1;
-       
+
         let take = 10;
         let skip = (page - 1) * take;
 
@@ -297,7 +292,7 @@ export async function findBooksByCriteriaForLibrarian(
         });
         console.log(books.length);
         if (books.length == 0) {
-            return []; 
+            return [];
         }
 
         // Map book IDs to their associated genre names
@@ -311,7 +306,7 @@ export async function findBooksByCriteriaForLibrarian(
             });
 
             // Extract genre names for the current book
-            const genresForBook = bookGenres.map(bg => bg.genres.name);
+            const genresForBook = bookGenres.map((bg) => bg.genres.name);
 
             // Map book ID to its associated genre names
             bookGenresMap[book.book_id] = genresForBook;
@@ -331,15 +326,16 @@ export async function findBooksByCriteriaForLibrarian(
         }));
     } catch (error) {
         if (error instanceof Error) {
-            throw new Error(`Error finding books by criteria: ${error.message}`);
+            throw new Error(
+                `Error finding books by criteria: ${error.message}`,
+            );
         } else {
-            throw new Error(`Error finding books by criteria: Unknown error occurred`);
+            throw new Error(
+                `Error finding books by criteria: Unknown error occurred`,
+            );
         }
     }
 }
-
-
-
 
 export async function findBooksByCriteria(criteria: BookFilters) {
     try {
@@ -394,7 +390,7 @@ export async function findBooksByCriteria(criteria: BookFilters) {
                 },
             },
         });
-        
+
         // Map book IDs to their associated genre names
         const bookGenresMap: Record<number, string[]> = {};
 
@@ -406,7 +402,7 @@ export async function findBooksByCriteria(criteria: BookFilters) {
             });
 
             // Extract genre names for the current book
-            const genresForBook = bookGenres.map(bg => bg.genres.name);
+            const genresForBook = bookGenres.map((bg) => bg.genres.name);
 
             // Map book ID to its associated genre names
             bookGenresMap[book.book_id] = genresForBook;
@@ -597,11 +593,11 @@ export async function reserveBook(
 export async function getReservationsForLibrarian(
     librarianName: string,
     status: any,
-    options?:any
+    options?: any,
 ) {
     try {
         let page = options || 1;
-       
+
         let take = 10;
         let skip = (page - 1) * take;
         console.log(status);
@@ -648,11 +644,11 @@ export async function getReservationsForLibrarian(
 export async function getBorrowedBooksForLibrarian(
     librarianName: string,
     state: transactionTypes | any,
-    options?:any
+    options?: any,
 ) {
     try {
         let page = options || 1;
-       
+
         let take = 10;
         let skip = (page - 1) * take;
         const borrowedBooks = await prisma.transactions.findMany({
@@ -687,7 +683,6 @@ export async function getBorrowedBooksForLibrarian(
                 },
             },
         });
-        ;
         return borrowedBooks;
     } catch (error) {
         console.error("Error retrieving borrowed books for librarian", error);
@@ -697,7 +692,6 @@ export async function getBorrowedBooksForLibrarian(
 export async function getBorrowedBooksForLibrarianToConfirm(
     librarianName: string,
     state: transactionTypes | any,
-    
 ) {
     try {
         const borrowedBooks = await prisma.transactions.findMany({
@@ -730,7 +724,6 @@ export async function getBorrowedBooksForLibrarianToConfirm(
                 },
             },
         });
-        ;
         return borrowedBooks;
     } catch (error) {
         console.error("Error retrieving borrowed books for librarian", error);
@@ -952,6 +945,90 @@ export async function deleteReservation(reservationId: number, userId: number) {
         throw new Error("Failed to delete reservation");
     }
 }
+export async function deleteTransactionForUser(
+    transactionId: number,
+    userId: number,
+) {
+    try {
+        console.log(transactionId, userId);
+        const user = await findUserById(userId);
+        const transaction = await prisma.transactions.findUnique({
+            where: {
+                transaction_id: transactionId,
+                user_id: user?.user_id,
+                transaction_type: "Borrow_request",
+            },
+        });
+        console.log(transaction);
+        if (!transaction) {
+            throw new Error(
+                "there is no transaction belong to you with this id",
+            );
+        }
+        await prisma.transactions.delete({
+            where: {
+                transaction_id: transactionId,
+            },
+        });
+
+        return "Transaction deleted successfully";
+    } catch (error) {
+        console.error("Error deleting transaction:", error);
+        throw new Error("Failed to delete transaction");
+    }
+}
+export async function deleteReservationForUser(
+    reservationId: number,
+    userId: number,
+) {
+    try {
+        const user = await findUserById(userId);
+        const reservations = await prisma.reservations.findMany({
+            where: {
+                reservation_id: reservationId,
+                user_id: user?.user_id,
+                status: "Pending" || "Confirmed",
+            },
+        });
+        if (!reservations) {
+            throw new Error(
+                "there is no reservation belong to you with this id",
+            );
+        }
+        // Assuming reservation is an array of objects
+        for (const reservation of reservations) {
+            if (reservation.status === "Confirmed") {
+                const book_id = reservation.book_id;
+                if (!book_id) {
+                    throw new Error(
+                        "Book ID is not available in the transaction",
+                    );
+                }
+                const book = await prisma.books.findUnique({
+                    where: { book_id: book_id },
+                });
+                if (book) {
+                    await prisma.books.update({
+                        where: { book_id: book_id },
+                        data: {
+                            available_copies: book.available_copies + 1,
+                        },
+                    });
+                }
+            }
+        }
+        await prisma.reservations.delete({
+            where: {
+                reservation_id: reservationId,
+            },
+        });
+
+        return "Reservation deleted successfully";
+    } catch (error) {
+        console.error("Error deleting reservation:", error);
+        throw new Error("Failed to delete reservation");
+    }
+}
 
 export async function confirmReserveForLibrarian(
     librarianName: string,
@@ -1135,14 +1212,14 @@ export async function checkExpiredBooksForLibrarian(librarianName: string) {
                         username: true,
                         user_libraries: {
                             where: {
-                                library_name: librarianName
+                                library_name: librarianName,
                             },
                             select: {
-                                is_active: true
-                            }
-                        }
-                    }
-                }
+                                is_active: true,
+                            },
+                        },
+                    },
+                },
             },
         });
 
@@ -1162,14 +1239,14 @@ export async function checkExpiredBooksForLibrarian(librarianName: string) {
                         username: true,
                         user_libraries: {
                             where: {
-                                library_name: librarianName
+                                library_name: librarianName,
                             },
                             select: {
-                                is_active: true
-                            }
-                        }
-                    }
-                }
+                                is_active: true,
+                            },
+                        },
+                    },
+                },
             },
         });
 
@@ -1236,7 +1313,6 @@ export async function getTransactionsForUser(userId: number) {
                         available_copies: true,
                     },
                 },
-                
             },
         });
 
@@ -1246,4 +1322,3 @@ export async function getTransactionsForUser(userId: number) {
         throw new Error("Failed to retrieve transactions for user");
     }
 }
-

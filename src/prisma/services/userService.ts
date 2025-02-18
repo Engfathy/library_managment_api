@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { User, UserFilters } from "../../interface/models.interface";
 import bcrypt from "bcryptjs";
 import * as crypto from "crypto";
@@ -300,13 +300,22 @@ export const deleteUserByIdOrEmailOrUsername = async (
             throw new Error("User not found");
         }
 
-        await prisma.users.delete({
+        const deleteResult = await prisma.users.delete({
             where: {
                 user_id: user.user_id,
             },
         });
+
+        if (deleteResult) {
+            return `User with ID ${identifier} deleted successfully`;
+        } else {
+            return `Failed to delete user with ID ${identifier} it has a related data`;
+        }
     } catch (error) {
-        if (error instanceof Error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error?.code === 'P2003') {
+            // Specific error code for foreign key constraint violation
+            return `Failed to delete user with ID ${identifier}. It has related data.`;
+        } else if (error instanceof Error) {
             throw new Error(`Error deleting user: ${error.message}`);
         } else {
             throw new Error(`Error deleting user: Unknown error occurred`);

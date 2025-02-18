@@ -78,11 +78,13 @@ export const addBookByLibrarian = async (
         const books = await findBooksByCriteriaForLibrarian(
             {},
             String(librarianUser.library_name),
+            1
         );
         return res.status(200).json({
             success: true,
             msg: "Book added successfully",
             data: books,
+            page:1
         });
     } catch (error) {
         console.error(error);
@@ -272,7 +274,7 @@ export const filterBooksForLibrarian = async (
 
             if (!books || books.length === 0) {
                 return res.status(404).json({
-                    success: false,
+                    success: true,
                     msg: "No more data💔💔(❁´◡`❁)",
                     page:parseInt(page as string)
                 });
@@ -342,7 +344,7 @@ export const getRequestedBorrowBooks = async (
         
         if (!data || data.length === 0) {
             return res.status(404).json({
-                success: false,
+                success: true,
                 msg: "No more data💔💔(❁´◡`❁)",
                 page:parseInt(page as string)
             });
